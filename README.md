@@ -1,1 +1,650 @@
 # NOTRE-SITE-INTERNET
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guy Hoquet — Score d'affinité</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.app { width: 100%; max-width: 480px; }
+.screen { display: none; }
+.screen.active { display: block; }
+
+.popup-wrap { background: #f0ede8; border-radius: 16px; padding: 24px; }
+.popup-header { text-align: center; margin-bottom: 18px; }
+.popup-title { font-size: 20px; font-weight: 500; color: #1a1a18; margin: 0 0 5px; }
+.popup-sub { font-size: 13px; color: #73726c; margin: 0; }
+.prog-bg { height: 3px; background: #fff; border-radius: 2px; margin-bottom: 6px; }
+.prog-fill { height: 3px; background: #185FA5; border-radius: 2px; transition: width .4s; }
+.q-step { font-size: 11px; color: #9c9a92; text-align: right; margin-bottom: 12px; }
+.q-card { background: #fff; border-radius: 14px; border: 0.5px solid #d3d1c7; padding: 20px; margin-bottom: 14px; min-height: 120px; }
+.q-txt { font-size: 16px; font-weight: 500; color: #1a1a18; margin: 0 0 5px; text-align: center; }
+.q-hint { font-size: 12px; color: #9c9a92; text-align: center; margin: 0 0 16px; min-height: 14px; }
+.q-opts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.q-opt { font-size: 13px; padding: 9px 16px; border-radius: 22px; border: 0.5px solid #b4b2a9; color: #73726c; cursor: pointer; transition: all .15s; background: #fff; }
+.q-opt:hover { border-color: #185FA5; color: #185FA5; }
+.q-opt.sel { background: #185FA5; border-color: #185FA5; color: #fff; }
+.q-opt.wide { width: 100%; text-align: left; display: flex; align-items: center; gap: 12px; border-radius: 12px; }
+.q-opt-icon { width: 32px; height: 32px; border-radius: 50%; background: #f0ede8; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; color: #888780; flex-shrink: 0; }
+.q-opt.wide.sel .q-opt-icon { background: rgba(255,255,255,.2); color: #fff; }
+.q-opt-text { flex: 1; }
+.q-opt-main { display: block; font-size: 13px; font-weight: 500; }
+.q-opt-sub { display: block; font-size: 11px; color: #9c9a92; margin-top: 1px; }
+.q-opt.wide.sel .q-opt-sub { color: rgba(255,255,255,.7); }
+.multi-hint { font-size: 11px; color: #9c9a92; text-align: center; margin-bottom: 10px; }
+.loc-input { width: 100%; padding: 10px 16px; border-radius: 22px; border: 0.5px solid #b4b2a9; background: #f5f4f0; color: #1a1a18; font-size: 13px; outline: none; font-family: inherit; }
+.loc-input:focus { border-color: #185FA5; background: #fff; }
+.loc-input::placeholder { color: #9c9a92; }
+.loc-dropdown { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 10px; margin-top: 4px; overflow: hidden; display: none; }
+.loc-dropdown-item { padding: 9px 14px; font-size: 13px; color: #1a1a18; cursor: pointer; border-bottom: 0.5px solid #f0ede8; }
+.loc-dropdown-item:last-child { border-bottom: none; }
+.loc-dropdown-item:hover { background: #f5f4f0; color: #185FA5; }
+.loc-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.loc-sug { font-size: 12px; padding: 5px 11px; border-radius: 16px; background: #f0ede8; border: 0.5px solid #d3d1c7; color: #73726c; cursor: pointer; transition: all .15s; }
+.loc-sug:hover, .loc-sug.sel { border-color: #185FA5; color: #185FA5; background: #fff; }
+.slider-display { text-align: center; font-size: 28px; font-weight: 500; color: #185FA5; margin-bottom: 16px; }
+.slider-input { width: 100%; accent-color: #185FA5; cursor: pointer; }
+.slider-range-labels { display: flex; justify-content: space-between; font-size: 11px; color: #9c9a92; margin-top: 6px; }
+.slider-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px; }
+.slider-chip { font-size: 12px; padding: 5px 12px; border-radius: 16px; background: #f0ede8; border: 0.5px solid #d3d1c7; color: #73726c; cursor: pointer; transition: all .15s; }
+.slider-chip:hover { border-color: #185FA5; color: #185FA5; }
+.next-btn { width: 100%; padding: 13px; border-radius: 24px; background: #185FA5; color: #fff; border: none; font-size: 14px; font-family: inherit; cursor: pointer; transition: opacity .2s; }
+.next-btn:hover { opacity: .88; }
+.skip-link { text-align: center; margin-top: 10px; font-size: 12px; color: #9c9a92; cursor: pointer; }
+.skip-link:hover { color: #73726c; }
+
+.swipe-wrap { max-width: 420px; margin: 0 auto; }
+.swipe-hint { text-align: center; font-size: 12px; color: #9c9a92; margin-bottom: 14px; }
+.bien-swipe { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+.bien-img-ph { width: 100%; height: 130px; background: #f0ede8; border-radius: 10px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #9c9a92; }
+.bien-infos { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.bien-name { font-size: 14px; font-weight: 500; color: #1a1a18; }
+.bien-prix { font-size: 13px; color: #73726c; }
+.bien-tags2 { display: flex; flex-wrap: wrap; gap: 5px; }
+.bt2 { font-size: 11px; padding: 3px 9px; border-radius: 12px; background: #f0ede8; color: #73726c; }
+.bt2.ok { background: #E1F5EE; color: #085041; }
+.swipe-actions { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 10px; }
+.sw-btn { border-radius: 50%; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1.5px solid; transition: all .15s; font-size: 20px; }
+.sw-no { width: 54px; height: 54px; border-color: #E24B4A; color: #E24B4A; }
+.sw-no:hover { background: #FCEBEB; }
+.sw-yes { width: 54px; height: 54px; border-color: #1D9E75; color: #1D9E75; }
+.sw-yes:hover { background: #E1F5EE; }
+.sw-meh { width: 44px; height: 44px; border-color: #b4b2a9; color: #9c9a92; font-size: 17px; }
+.sw-count { font-size: 11px; color: #9c9a92; text-align: center; }
+.swipe-legend { display: flex; justify-content: center; gap: 20px; font-size: 11px; color: #9c9a92; margin-top: 8px; }
+
+.results-wrap { max-width: 460px; margin: 0 auto; }
+.score-hero { text-align: center; padding: 18px 0 20px; }
+.score-circle { width: 86px; height: 86px; border-radius: 50%; background: #E6F1FB; border: 2px solid #185FA5; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.score-circle-num { font-size: 26px; font-weight: 500; color: #185FA5; line-height: 1; }
+.score-circle-lbl { font-size: 10px; color: #185FA5; margin-top: 2px; }
+.score-desc { font-size: 13px; color: #73726c; }
+.biens-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.bien-result { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 14px; padding: 12px 14px; }
+.br-name { font-size: 13px; font-weight: 500; color: #1a1a18; margin: 0 0 3px; }
+.br-prix { font-size: 12px; color: #73726c; margin: 0 0 8px; }
+.br-score-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.br-pct { font-size: 12px; font-weight: 500; color: #1D9E75; white-space: nowrap; }
+.br-bar-bg { flex: 1; height: 4px; background: #f0ede8; border-radius: 2px; }
+.br-bar { height: 4px; background: #1D9E75; border-radius: 2px; }
+.alex-btn-big { width: 100%; padding: 14px; border-radius: 24px; background: #185FA5; color: #fff; border: none; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; margin-bottom: 8px; transition: opacity .2s; }
+.alex-btn-big:hover { opacity: .88; }
+.alex-hint { text-align: center; font-size: 12px; color: #9c9a92; }
+
+.chat-screen { background: #f0ede8; border-radius: 16px; overflow: hidden; }
+.chat-header { background: #185FA5; padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+.chat-avatar-big { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: #fff; flex-shrink: 0; }
+.chat-header-name { font-size: 14px; font-weight: 500; color: #fff; margin: 0 0 2px; }
+.chat-status { font-size: 11px; color: rgba(255,255,255,.75); display: flex; align-items: center; gap: 5px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #5DCAA5; }
+.chat-messages { padding: 14px; display: flex; flex-direction: column; gap: 10px; height: 380px; overflow-y: auto; scroll-behavior: smooth; }
+.cmsg { display: flex; gap: 8px; align-items: flex-end; }
+.cmsg.user { flex-direction: row-reverse; }
+.cav { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+.cav.bot { background: #185FA5; color: #fff; }
+.cav.usr { background: #d3d1c7; color: #73726c; }
+.cbubble { padding: 10px 13px; border-radius: 16px; font-size: 13px; line-height: 1.6; max-width: 320px; word-wrap: break-word; }
+.cbubble.bot { background: #fff; border: 0.5px solid #d3d1c7; border-bottom-left-radius: 4px; color: #1a1a18; }
+.cbubble.usr { background: #185FA5; color: #fff; border-bottom-right-radius: 4px; }
+.chat-chips-wrap { padding: 0 14px 10px; display: flex; flex-wrap: wrap; gap: 6px; min-height: 10px; }
+.cchip { font-size: 12px; padding: 6px 13px; border-radius: 20px; border: 0.5px solid #b4b2a9; color: #73726c; background: #fff; cursor: pointer; transition: all .15s; }
+.cchip:hover { border-color: #185FA5; color: #185FA5; }
+.chat-footer { display: flex; gap: 8px; padding: 12px 14px; border-top: 0.5px solid #d3d1c7; background: #fff; }
+.chat-inp { flex: 1; padding: 9px 14px; border-radius: 22px; border: 0.5px solid #b4b2a9; background: #f5f4f0; font-size: 13px; font-family: inherit; color: #1a1a18; outline: none; }
+.chat-inp:focus { border-color: #185FA5; background: #fff; }
+.chat-send-btn { padding: 9px 16px; border-radius: 22px; background: #185FA5; color: #fff; border: none; font-size: 13px; font-family: inherit; cursor: pointer; }
+.chat-send-btn:hover { opacity: .88; }
+.typing-wrap { display: flex; align-items: center; gap: 5px; padding: 4px 2px; }
+.tdot { width: 7px; height: 7px; border-radius: 50%; background: #b4b2a9; animation: tdot 1s infinite; }
+.tdot:nth-child(2) { animation-delay: .2s; }
+.tdot:nth-child(3) { animation-delay: .4s; }
+@keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.5} 30%{transform:translateY(-6px);opacity:1} }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div id="s1" class="screen active">
+  <div class="popup-wrap">
+    <div class="popup-header">
+      <p class="popup-title">Bienvenue chez Guy Hoquet</p>
+      <p class="popup-sub">Votre projet · 1 minute</p>
+    </div>
+    <div class="prog-bg"><div class="prog-fill" id="pbar" style="width:0%"></div></div>
+    <p class="q-step" id="qstep">&nbsp;</p>
+    <div class="q-card">
+      <p class="q-txt" id="qtxt"></p>
+      <p class="q-hint" id="qhint"></p>
+      <div id="opts-wrap"></div>
+    </div>
+    <button class="next-btn" id="next-btn" style="display:none" onclick="nextQ()">Continuer →</button>
+    <p class="skip-link" id="skip-lnk" style="display:none" onclick="skipToResults()">Passer cette étape</p>
+  </div>
+</div>
+
+<div id="s2" class="screen">
+  <div class="swipe-wrap">
+    <p class="swipe-hint">Ces biens vous correspondent ? 30 secondes pour calibrer votre score</p>
+    <div class="bien-swipe">
+      <div class="bien-img-ph">Photo du bien</div>
+      <div class="bien-infos">
+        <span class="bien-name" id="sw-name"></span>
+        <span class="bien-prix" id="sw-prix"></span>
+      </div>
+      <div class="bien-tags2" id="sw-tags"></div>
+    </div>
+    <div class="swipe-actions">
+      <button class="sw-btn sw-no" onclick="doSwipe()">✕</button>
+      <button class="sw-btn sw-meh" onclick="doSwipe()">~</button>
+      <button class="sw-btn sw-yes" onclick="doSwipe()">✓</button>
+    </div>
+    <p class="sw-count" id="sw-count"></p>
+    <div class="swipe-legend"><span>✕ Non</span><span>~ Peut-être</span><span>✓ Oui</span></div>
+  </div>
+</div>
+
+<div id="s3" class="screen">
+  <div class="results-wrap">
+    <div class="score-hero">
+      <div class="score-circle" id="score-circle">
+        <span class="score-circle-num">94%</span>
+        <span class="score-circle-lbl">affinité</span>
+      </div>
+      <p class="score-desc" id="score-desc">Biens correspondant à votre profil</p>
+    </div>
+    <div class="biens-grid" id="results-grid"></div>
+    <button class="alex-btn-big" onclick="goChat()">Aller plus loin avec Alexandre ✦</button>
+    <p class="alex-hint">Conseiller IA · disponible maintenant · répond instantanément</p>
+  </div>
+</div>
+
+<div id="s4" class="screen">
+  <div class="chat-screen">
+    <div class="chat-header">
+      <div class="chat-avatar-big">A</div>
+      <div>
+        <p class="chat-header-name">Alexandre</p>
+        <div class="chat-status"><span class="status-dot"></span><span>Conseiller IA Guy Hoquet · en ligne</span></div>
+      </div>
+    </div>
+    <div class="chat-messages" id="chat-msgs"></div>
+    <div class="chat-chips-wrap" id="chat-chips"></div>
+    <div class="chat-footer">
+      <input class="chat-inp" id="chat-inp" placeholder="Écrivez à Alexandre..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" />
+      <button class="chat-send-btn" onclick="sendChat()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+var projet = null, qi = 0, si = 0, sliderCfg = null, profil = {}, chatStep = 0;
+
+var LOC_VILLES = {
+  acheter: ["Paris 11e","Paris 12e","Paris 13e","Paris 15e","Paris 18e","Paris 20e","Vincennes","Montreuil","Saint-Mandé","Charenton","Ivry-sur-Seine","Boulogne"],
+  louer:   ["Paris 10e","Paris 11e","Paris 12e","Paris 18e","Paris 19e","Paris 20e","Vincennes","Montreuil","Pantin","Saint-Denis","Aubervilliers","Bagnolet"]
+};
+
+var FLOWS = {
+  acheter: [
+    { q:"Où cherchez-vous ?", hint:"Ville, quartier ou adresse", isLoc:true, key:'localisation' },
+    { q:"Surface minimum ?", hint:"On filtre au-dessus de ce seuil", isSlider:true, key:'surface', cfg:{min:20,max:200,step:5,def:55,unit:'m²',chips:[{l:"Studio ~20m²",v:20},{l:"T2 ~40m²",v:40},{l:"T3 ~60m²",v:60},{l:"T4 ~80m²",v:80},{l:"Maison 120m²+",v:120}]} },
+    { q:"Votre budget d'achat ?", hint:"Prix total frais inclus", isSlider:true, key:'budget', cfg:{min:50000,max:1500000,step:10000,def:400000,unit:'€',chips:[{l:"- 200k",v:200000},{l:"350k",v:350000},{l:"500k",v:500000},{l:"750k",v:750000},{l:"1M+",v:1000000}]} },
+    { q:"Comment vous déplacez-vous ?", hint:"On adapte le rayon de recherche", isWide:true, key:'transport', opts:[{label:"Métro / RER",sub:"Max 10 min à pied",icon:"M"},{label:"Voiture",sub:"Parking indispensable",icon:"P"},{label:"Vélo",sub:"Pistes cyclables",icon:"V"},{label:"À pied",sub:"Tout à moins de 15 min",icon:"A"}] },
+    { q:"Vos critères ?", hint:"Plusieurs choix possibles", isMulti:true, key:'criteres', opts:["Lumière / expo sud","Calme / rue résidentielle","Balcon ou terrasse","Parking","Ascenseur","Cave","Jardin","DPE A ou B","Travaux acceptés","Vue dégagée"] }
+  ],
+  vendre: [
+    { q:"Quel type de bien vendez-vous ?", hint:"", key:'type', opts:["Appartement","Maison","Local commercial","Terrain","Immeuble"] },
+    { q:"Où se situe votre bien ?", hint:"Ville, quartier ou adresse", isLoc:true, key:'localisation' },
+    { q:"Quelle est la surface ?", hint:"Surface habitable en m²", isSlider:true, key:'surface', cfg:{min:10,max:300,step:5,def:70,unit:'m²',chips:[{l:"Studio ~20m²",v:20},{l:"T2 ~45m²",v:45},{l:"T3 ~70m²",v:70},{l:"T4 ~90m²",v:90},{l:"Maison 150m²+",v:150}]} },
+    { q:"Dans quel délai souhaitez-vous vendre ?", hint:"", key:'delai', opts:["Le plus vite possible","D'ici 3 mois","D'ici 6 mois","Pas de pression particulière"] }
+  ],
+  louer: [
+    { q:"Où cherchez-vous à louer ?", hint:"Ville, quartier ou adresse", isLoc:true, key:'localisation' },
+    { q:"Surface minimum ?", hint:"", isSlider:true, key:'surface', cfg:{min:15,max:150,step:5,def:40,unit:'m²',chips:[{l:"Studio 15m²",v:15},{l:"T1 ~30m²",v:30},{l:"T2 ~45m²",v:45},{l:"T3 ~65m²",v:65},{l:"T4 85m²+",v:85}]} },
+    { q:"Loyer maximum ?", hint:"Charges comprises de préférence", isSlider:true, key:'budget', cfg:{min:400,max:4000,step:50,def:1000,unit:'€/mois',chips:[{l:"- 700€",v:700},{l:"1 000€",v:1000},{l:"1 500€",v:1500},{l:"2 000€",v:2000},{l:"3 000€+",v:3000}]} },
+    { q:"Comment vous déplacez-vous ?", hint:"On adapte le rayon", isWide:true, key:'transport', opts:[{label:"Métro / RER",sub:"Max 10 min à pied",icon:"M"},{label:"Voiture",sub:"Parking souhaité",icon:"P"},{label:"Vélo",sub:"Pistes cyclables",icon:"V"},{label:"À pied",sub:"Tout à proximité",icon:"A"}] },
+    { q:"Vos critères ?", hint:"Plusieurs choix possibles", isMulti:true, key:'criteres', opts:["Meublé","Non meublé","Balcon / terrasse","Parking","Animaux acceptés","Ascenseur","Cave","Colocation OK","Bail mobilité","DPE A ou B"] }
+  ]
+};
+
+var BIENS = {
+  acheter: [
+    {name:"T3 · Paris 12e · 68m²",prix:"485 000 €",tags:["Balcon sud","DPE B","Métro 4 min"],ok:[0,1,2]},
+    {name:"T2 · Paris 11e · 52m²",prix:"420 000 €",tags:["Animé","Commerce","DPE C"],ok:[]},
+    {name:"T3 · Vincennes · 74m²",prix:"462 000 €",tags:["Jardin","DPE A","RER 6 min"],ok:[0,2]},
+    {name:"T2+ · Paris 12e · 58m²",prix:"495 000 €",tags:["Vue dégagée","Lumineux","DPE B"],ok:[0,1]}
+  ],
+  louer: [
+    {name:"T2 · Paris 11e · 45m²",prix:"1 350 €/mois",tags:["Calme","DPE C","Métro 3 min"],ok:[0,2]},
+    {name:"Studio · Paris 12e · 28m²",prix:"890 €/mois",tags:["Rénové","DPE B","Animé"],ok:[1]},
+    {name:"T3 · Vincennes · 67m²",prix:"1 800 €/mois",tags:["Jardin","DPE A","Calme"],ok:[0,2]},
+    {name:"T2 · Paris 20e · 42m²",prix:"1 150 €/mois",tags:["Lumineux","DPE C","Vélo"],ok:[0]}
+  ]
+};
+
+var RESULTS = {
+  acheter: [{name:"T3 · Roquette · 68m²",prix:"485 000 €",pct:99},{name:"T3 · Vincennes · 74m²",prix:"462 000 €",pct:94},{name:"T2+ · Ledru-Rollin",prix:"495 000 €",pct:88},{name:"T3 · Nation · 66m²",prix:"439 000 €",pct:81}],
+  vendre:  [{name:"Fourchette haute",prix:"580 000 – 640 000 €",pct:97},{name:"Prix marché rapide",prix:"540 000 – 570 000 €",pct:91},{name:"Délai moyen",prix:"~42 jours",pct:88},{name:"Ventes similaires",prix:"3 ces 6 derniers mois",pct:82}],
+  louer:   [{name:"T2 · Paris 11e · 45m²",prix:"1 350 €/mois",pct:97},{name:"T3 · Vincennes · 67m²",prix:"1 800 €/mois",pct:91},{name:"T2 · Paris 20e · 42m²",prix:"1 150 €/mois",pct:85},{name:"Studio · Paris 12e",prix:"890 €/mois",pct:78}]
+};
+
+/* ── MOTEUR DE CONVERSATION ALEXANDRE (sans API) ── */
+var DIALOGUES = {
+  acheter: [
+    { chips:["Résidence principale","Investissement locatif","Les deux"],
+      respond: function(txt) {
+        var loc = profil.localisation || "votre secteur";
+        var budget = profil.budget || "votre budget";
+        if (/invest/i.test(txt)) return "Un investissement à " + loc + ", très bon choix — la demande locative y est soutenue. Vous visez plutôt un studio/T2 pour maximiser le rendement, ou un bien plus grand pour du locatif familial ?";
+        if (/deux|les deux/i.test(txt)) return "Parfait, on peut viser un bien qui se valorise bien et qui pourrait se louer facilement si besoin. À " + loc + ", les T3 bien situés remplissent souvent ces deux critères. Vous êtes combien à habiter le logement ?";
+        return "Très bien, une résidence principale à " + loc + ". Vous êtes combien à habiter le logement — seul(e), en couple, avec des enfants ?";
+      }
+    },
+    { chips:["Seul(e)","En couple","Avec enfants"],
+      respond: function(txt) {
+        var surface = profil.surface || "la surface souhaitée";
+        if (/enfant/i.test(txt)) return "Avec des enfants, la proximité des écoles et un espace extérieur deviennent souvent prioritaires. Avez-vous déjà une école ou un quartier précis en tête, ou c'est encore ouvert ?";
+        if (/couple/i.test(txt)) return "En couple avec " + surface + ", on a de belles options. Est-ce que vous avez besoin d'une pièce de travail à domicile, ou c'est surtout le salon/séjour qui compte ?";
+        return "Super. Pour " + surface + " en solo, on peut viser des biens très bien situés dans votre budget. Vous travaillez depuis chez vous parfois, ou pas besoin de bureau dédié ?";
+      }
+    },
+    { chips:["Oui j'ai besoin d'un bureau","Non pas besoin","Parfois"],
+      respond: function(txt) {
+        var budget = profil.budget || "votre budget";
+        return "Noté. Avec " + budget + ", je vois plusieurs biens qui correspondent bien à votre profil dans ce secteur. Souhaitez-vous qu'on planifie des visites cette semaine, ou vous préférez d'abord affiner votre recherche ?";
+      }
+    },
+    { chips:["Planifier des visites","Affiner la recherche","Me parler du crédit"],
+      respond: function(txt) {
+        if (/cr[eé]dit|financement|pr[eê]t/i.test(txt)) return "Bonne idée de clarifier ça en premier. Avec " + (profil.budget||"votre budget") + " en budget total, en comptant 10% de frais de notaire, votre prix de bien cible est autour de " + getBudgetNet() + ". Avez-vous déjà eu un accord de principe de votre banque ?";
+        if (/visite/i.test(txt)) return "Parfait ! Nos conseillers en agence sont disponibles du mardi au samedi. Je vous recommande de visiter 2-3 biens en même temps pour comparer. Voulez-vous que je vous mette en relation avec l'agence Guy Hoquet la plus proche de " + (profil.localisation||"votre secteur") + " ?";
+        return "Pour affiner, les deux critères qui font souvent la différence sont l'exposition (lumière) et l'étage. Avez-vous une préférence — rez-de-chaussée avec jardin, ou étage élevé avec vue ?";
+      }
+    },
+    { chips:["Oui mettre en relation","Plutôt explorer encore","Question sur le crédit"],
+      respond: function(txt) {
+        if (/relation|agence|contact/i.test(txt)) return "Je note votre demande. Un conseiller Guy Hoquet de " + (profil.localisation||"votre secteur") + " va vous recontacter dans les 24h pour organiser vos visites. Y a-t-il un créneau qui vous convient mieux — matin ou après-midi ?";
+        if (/cr[eé]dit|pr[eê]t/i.test(txt)) return "Pour un budget de " + (profil.budget||"votre budget") + ", avec un apport de 10%, la mensualité serait autour de " + getMensualite() + " sur 20 ans (taux ~3,7%). Vous avez déjà un apport constitué ?";
+        return "Pas de souci, prenez le temps qu'il faut. N'hésitez pas à revenir vers moi quand vous voulez avancer — je suis là pour vous accompagner à votre rythme.";
+      }
+    }
+  ],
+
+  vendre: [
+    { chips:["Première estimation","J'ai déjà un prix en tête","Je vends pour racheter"],
+      respond: function(txt) {
+        var loc = profil.localisation || "votre secteur";
+        var surface = profil.surface || "votre bien";
+        if (/racheter|rachète/i.test(txt)) return "Vendre et racheter en même temps, c'est un projet à bien coordonner pour éviter le double crédit. La bonne nouvelle : avec un mandat exclusif Guy Hoquet, le délai moyen est de 42 jours — ce qui laisse le temps de trouver votre prochain bien. Avez-vous déjà visité des biens pour votre futur achat ?";
+        if (/prix|estimation/i.test(txt)) return "Bien. Pour affiner votre prix, nos conseillers s'appuient sur les ventes récentes dans un rayon de 500m. À " + loc + ", " + surface + " se vend généralement entre " + getPrixFourchette() + ". Souhaitez-vous une estimation officielle gratuite par un conseiller ?";
+        return "Pour une première estimation de votre bien à " + loc + ", l'outil en ligne vous donne une fourchette en 2 minutes. Mais pour un prix précis, rien ne vaut la visite d'un conseiller — c'est gratuit et sans engagement. Vous préférez commencer par lequel ?";
+      }
+    },
+    { chips:["Estimation en ligne","Visite d'un conseiller","Les deux"],
+      respond: function(txt) {
+        if (/ligne|online/i.test(txt)) return "Rendez-vous sur estimateur.guy-hoquet.com — il vous faudra l'adresse, la surface, le nombre de pièces et l'état général. Résultat en moins de 2 minutes. Vous avez les diagnostics déjà réalisés pour votre bien ?";
+        return "Je note votre demande de visite conseiller. Avant la visite, il faut idéalement avoir le DPE à jour — c'est obligatoire pour mettre en vente. Vous l'avez déjà ?";
+      }
+    },
+    { chips:["Oui j'ai le DPE","Non pas encore","C'est quoi le DPE ?"],
+      respond: function(txt) {
+        if (/c'est quoi|kesako|qu'est-ce/i.test(txt)) return "Le DPE (Diagnostic de Performance Énergétique) est obligatoire pour toute vente. Il évalue la consommation énergétique de votre bien sur une échelle de A à G. Un DPE A ou B peut augmenter votre prix de vente de 5 à 15%. Il coûte entre 100 et 250€ et est valable 10 ans.";
+        if (/non|pas encore/i.test(txt)) return "Pas de panique — Guy Hoquet peut vous mettre en relation avec des diagnostiqueurs partenaires à tarif négocié. En parallèle, savez-vous dans quel état général se trouve votre bien ? Travaux récents, ou plutôt à rafraîchir ?";
+        return "Parfait, c'est déjà une bonne base. Les autres diagnostics obligatoires selon l'ancienneté du bien : amiante, plomb, électricité, gaz, état des risques. Votre bien a été construit avant ou après 1997 ?";
+      }
+    },
+    { chips:["Avant 1997","Après 1997","Je ne sais pas"],
+      respond: function(txt) {
+        var delai = profil.delai || "";
+        var urgence = /vite|urgent|rapide/.test(delai) ? "Comme vous souhaitez vendre rapidement, " : "Pour votre calendrier, ";
+        return urgence + "je vous recommande de lancer les diagnostics cette semaine pour ne pas perdre de temps. Un conseiller Guy Hoquet peut coordonner tout ça pour vous — diagnostics, photos HDR, diffusion sur 30+ portails. Souhaitez-vous qu'on organise un rendez-vous cette semaine ?";
+      }
+    },
+    { chips:["Oui cette semaine","Plutôt le mois prochain","Encore des questions"],
+      respond: function(txt) {
+        if (/question/i.test(txt)) return "Bien sûr, posez-moi toutes vos questions — c'est pour ça que je suis là. Honoraires, délais, visibilité, home staging... qu'est-ce qui vous préoccupe le plus ?";
+        if (/prochain|plus tard/i.test(txt)) return "Pas de problème. D'ici là, vous pouvez commencer par l'estimation en ligne sur estimateur.guy-hoquet.com pour avoir une idée du prix. Et quand vous serez prêt(e), nos conseillers sont disponibles du mardi au samedi.";
+        return "Je note votre demande de rendez-vous. Un conseiller Guy Hoquet de " + (profil.localisation||"votre secteur") + " vous contactera dans les 24h pour fixer le créneau. Avez-vous d'autres questions sur la vente en attendant ?";
+      }
+    }
+  ],
+
+  louer: [
+    { chips:["Étudiant(e)","CDI","CDD","Fonctionnaire","Indépendant(e)"],
+      respond: function(txt) {
+        var loc = profil.localisation || "votre secteur";
+        if (/[eé]tudiant/i.test(txt)) return "Pour un(e) étudiant(e) à " + loc + ", les propriétaires demandent souvent un garant. Vous avez un garant familial, ou vous comptez utiliser Visale (caution gratuite pour les moins de 30 ans) ?";
+        if (/cdi/i.test(txt)) return "CDI, c'est le profil idéal pour les propriétaires. Vous êtes en période d'essai ou confirmé(e) ? Ça change un peu la présentation du dossier.";
+        if (/cdd/i.test(txt)) return "CDD, c'est tout à fait acceptable avec le bon dossier. Quelle est la durée de votre contrat actuel ? Et avez-vous un garant ou souhaitez utiliser Visale ?";
+        if (/fonctionnaire/i.test(txt)) return "Fonctionnaire, c'est un profil très rassurant pour les propriétaires — la stabilité est un vrai atout. Vous cherchez pour vous seul(e), en couple, ou en colocation ?";
+        if (/ind[eé]pendant|freelance|auto.entrepreneur/i.test(txt)) return "Indépendant(e), ça peut fonctionner avec un bon dossier. Les propriétaires regardent les 3 derniers avis d'imposition. Vos revenus nets mensuels sont stables, ou variables selon les mois ?";
+        return "Je note votre situation. Pour constituer votre dossier, vous allez avoir besoin de justificatifs de revenus. Vous connaissez DossierFacile.fr ? C'est gratuit, service public, et ça donne un vrai coup de confiance aux propriétaires.";
+      }
+    },
+    { chips:["Oui je connais DossierFacile","Non c'est quoi ?","J'ai déjà un dossier complet"],
+      respond: function(txt) {
+        var budget = profil.budget || "votre budget";
+        if (/c'est quoi|kesako/i.test(txt)) return "DossierFacile.fr est un service public gratuit qui regroupe et certifie tous vos documents (identité, revenus, quittances). Le dossier est validé en 24h et partageable en un lien. Les propriétaires lui font confiance car les documents sont vérifiés. Je vous recommande fortement de l'utiliser.";
+        if (/complet|déjà/i.test(txt)) return "Parfait, vous avez de l'avance ! Avec " + budget + " de budget et votre dossier prêt, on peut passer directement aux visites. Vous cherchez à emménager pour quand ?";
+        return "Super. Une question clé pour valider votre dossier : la règle des 3x. Vos revenus nets mensuels représentent bien au moins 3 fois le loyer que vous visez ? Avec " + budget + ", il faut donc " + getTroisFoisLoyer() + " de revenus nets.";
+      }
+    },
+    { chips:["Oui mes revenus correspondent","Pas tout à fait","J'ai un garant"],
+      respond: function(txt) {
+        var loc = profil.localisation || "votre secteur";
+        if (/garant/i.test(txt)) return "Avec un garant dont les revenus sont ≥ 3x le loyer, votre dossier est solide. Votre garant est-il en France ? Certains propriétaires acceptent des garants à l'étranger, mais c'est plus rare.";
+        if (/pas|non/i.test(txt)) return "Pas d'inquiétude — il y a des solutions. Visale peut couvrir jusqu'à 36 mois de loyer impayé, ce qui rassure les propriétaires même si vos revenus sont justes. Vous avez moins de 30 ans ou vous êtes salarié en mobilité ?";
+        return "Dossier solide ! À " + loc + ", avec votre profil, vous devriez trouver rapidement. En moyenne il faut visiter 3-5 biens avant de trouver le bon. Voulez-vous qu'on planifie des visites cette semaine ?";
+      }
+    },
+    { chips:["Planifier des visites","Encore des questions","Parler du dossier"],
+      respond: function(txt) {
+        var loc = profil.localisation || "votre secteur";
+        if (/visite/i.test(txt)) return "Je transmets votre demande à l'agence Guy Hoquet de " + loc + ". Un conseiller vous contactera pour organiser 2-3 visites correspondant exactement à votre profil. Quel est le meilleur moment pour vous — semaine ou weekend ?";
+        if (/dossier/i.test(txt)) return "Pour un dossier béton, il vous faut : pièce d'identité, 3 derniers bulletins de salaire, 3 derniers relevés bancaires, justificatif de domicile actuel, et contrat de travail. Si vous avez DossierFacile, ils peuvent tout regrouper. Vous avez tout ça ?";
+        return "Bien sûr ! Posez votre question, je suis là pour vous aider à naviguer tous ces aspects — loyer, charges, garanties, état des lieux... Qu'est-ce qui vous préoccupe ?";
+      }
+    },
+    { chips:["Semaine","Weekend","J'ai d'autres questions"],
+      respond: function(txt) {
+        if (/question/i.test(txt)) return "Allez-y ! Je suis là pour répondre à toutes vos questions sur la location à " + (profil.localisation||"votre secteur") + ".";
+        return "Parfait, je note votre préférence. Un conseiller Guy Hoquet vous recontacte dans les 24h pour confirmer les créneaux de visites. En attendant, vous pouvez consulter nos annonces sur guy-hoquet.com pour avoir un premier aperçu des biens disponibles.";
+      }
+    }
+  ]
+};
+
+/* Helpers calcul */
+function getBudgetNet() {
+  var b = parseInt((profil.budget||'').replace(/[^\d]/g,'')) || 400000;
+  var net = Math.round(b / 1.1 / 1000) * 1000;
+  return net.toLocaleString('fr-FR') + ' €';
+}
+function getMensualite() {
+  var b = parseInt((profil.budget||'').replace(/[^\d]/g,'')) || 400000;
+  var apport = b * 0.1;
+  var capital = b - apport;
+  var taux = 0.037 / 12;
+  var n = 240;
+  var m = Math.round(capital * taux / (1 - Math.pow(1+taux,-n)));
+  return m.toLocaleString('fr-FR') + ' €/mois';
+}
+function getPrixFourchette() {
+  var surface = parseInt((profil.surface||'').replace(/[^\d]/g,'')) || 65;
+  var loc = profil.localisation || '';
+  var prixM2 = /vincennes|saint-mand/i.test(loc) ? 8500 : /boulogne|issy/i.test(loc) ? 9200 : /montreuil|ivry|bagnolet/i.test(loc) ? 6500 : 10500;
+  var bas = Math.round(surface * prixM2 * 0.9 / 10000) * 10000;
+  var haut = Math.round(surface * prixM2 * 1.1 / 10000) * 10000;
+  return bas.toLocaleString('fr-FR') + ' € et ' + haut.toLocaleString('fr-FR') + ' €';
+}
+function getTroisFoisLoyer() {
+  var b = parseInt((profil.budget||'').replace(/[^\d]/g,'')) || 1000;
+  return (b * 3).toLocaleString('fr-FR') + ' €/mois';
+}
+
+/* Réponse générique si aucun dialogue ne matche */
+function reponseGenerique(txt) {
+  var t = txt.toLowerCase();
+  if (/charges|charge/.test(t)) return "Les charges comprennent généralement l'entretien des parties communes, le chauffage collectif si applicable, et parfois l'eau. Demandez toujours le décompte des charges des 2 dernières années avant de signer.";
+  if (/caution|d[eé]p[oô]t/.test(t)) return "Le dépôt de garantie est limité à 1 mois de loyer hors charges pour un logement non meublé, 2 mois pour un meublé. Il doit être restitué dans 1 mois après l'état des lieux de sortie (ou 2 mois si des retenues sont justifiées).";
+  if (/bail|contrat/.test(t)) return "Un bail standard pour un logement vide dure 3 ans (1 an pour un meublé). Le préavis est de 1 mois pour le locataire (3 mois hors zones tendues), et 6 mois pour le propriétaire. En zone tendue comme Paris, des règles spécifiques s'appliquent.";
+  if (/notaire|frais/.test(t)) return "Les frais de notaire représentent environ 7-8% dans l'ancien et 2-3% dans le neuf. Ils comprennent les droits de mutation, la rémunération du notaire et les débours. Pour un bien à 400 000€, comptez environ 30 000€ de frais.";
+  if (/dpe|[eé]nergie|classe/.test(t)) return "Le DPE (Diagnostic de Performance Énergétique) évalue la consommation d'énergie sur une échelle A à G. Depuis 2023, les logements classés G+ ne peuvent plus être mis en location, et les restrictions s'étendent progressivement aux classes F et G.";
+  if (/travaux|r[eé]nov/.test(t)) return "Des travaux de rénovation peuvent augmenter significativement la valeur d'un bien — comptez +5% pour une cuisine refaite, +3% pour une salle de bain, et jusqu'à +15% pour une rénovation énergétique améliorant le DPE.";
+  if (/rendez.vous|rdv|contact/.test(t)) return "Pour prendre rendez-vous avec un conseiller Guy Hoquet, vous pouvez appeler directement l'agence la plus proche ou passer par guy-hoquet.com. Je vous recommande de préparer vos documents avant la rencontre pour gagner du temps.";
+  if (/merci|super|parfait|ok/.test(t)) return "Avec plaisir ! N'hésitez pas si vous avez d'autres questions. Je suis là pour vous accompagner jusqu'à la signature.";
+  return "C'est une bonne question. Pour vous donner la réponse la plus précise, un conseiller Guy Hoquet en agence serait le mieux placé — ils connaissent les spécificités locales de " + (profil.localisation||"votre secteur") + ". Souhaitez-vous être mis(e) en relation ?";
+}
+
+/* ── QUIZ ── */
+function fmt(v, unit) {
+  v = parseInt(v);
+  if (unit==='€') { if(v>=1000000) return (v/1000000).toFixed(v%1000000===0?0:1)+' M€'; return v.toLocaleString('fr-FR')+' €'; }
+  if (unit==='€/mois') return v.toLocaleString('fr-FR')+' €/mois';
+  return v+' '+unit;
+}
+function onSlide(v) { document.getElementById('slider-display').textContent = fmt(v, sliderCfg.unit); }
+function setSlider(v) { document.getElementById('slider-input').value=v; onSlide(v); }
+function goScreen(id) { document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); document.getElementById(id).classList.add('active'); }
+
+function buildSlider(cfg) {
+  sliderCfg = cfg;
+  var w = document.getElementById('opts-wrap');
+  w.innerHTML = '<div class="slider-display" id="slider-display"></div><input class="slider-input" id="slider-input" type="range" oninput="onSlide(this.value)"><div class="slider-range-labels"><span id="sl-min"></span><span id="sl-max"></span></div><div class="slider-chips" id="sl-chips"></div>';
+  var inp = document.getElementById('slider-input');
+  inp.min=cfg.min; inp.max=cfg.max; inp.step=cfg.step; inp.value=cfg.def;
+  document.getElementById('slider-display').textContent = fmt(cfg.def, cfg.unit);
+  document.getElementById('sl-min').textContent = fmt(cfg.min, cfg.unit);
+  document.getElementById('sl-max').textContent = fmt(cfg.max, cfg.unit);
+  cfg.chips.forEach(function(c){ var s=document.createElement('span'); s.className='slider-chip'; s.textContent=c.l; s.onclick=function(){setSlider(c.v);}; document.getElementById('sl-chips').appendChild(s); });
+}
+
+function buildLoc(fk) {
+  var sugs = LOC_VILLES[fk]||LOC_VILLES.acheter;
+  var w = document.getElementById('opts-wrap');
+  w.innerHTML = '<input class="loc-input" id="loc-input" placeholder="Ex : Paris 12e, Vincennes, Montreuil..." style="margin-bottom:8px"><div class="loc-dropdown" id="loc-dd"></div><div class="loc-suggestions" id="loc-sugs"></div>';
+  sugs.forEach(function(s){ var el=document.createElement('span'); el.className='loc-sug'; el.textContent=s; el.onclick=function(){document.getElementById('loc-input').value=s; document.getElementById('loc-dd').style.display='none'; document.querySelectorAll('.loc-sug').forEach(function(x){x.classList.remove('sel');}); el.classList.add('sel');}; document.getElementById('loc-sugs').appendChild(el); });
+  document.getElementById('loc-input').addEventListener('input', function(){
+    var v=this.value.toLowerCase(); var dd=document.getElementById('loc-dd');
+    if(!v){dd.style.display='none';return;}
+    var m=sugs.filter(function(s){return s.toLowerCase().indexOf(v)>-1;});
+    if(!m.length){dd.style.display='none';return;}
+    dd.innerHTML=''; dd.style.display='block';
+    m.forEach(function(item){ var d=document.createElement('div'); d.className='loc-dropdown-item'; d.textContent=item; d.onclick=function(){document.getElementById('loc-input').value=item; dd.style.display='none'; document.querySelectorAll('.loc-sug').forEach(function(x){x.classList.remove('sel'); if(x.textContent===item)x.classList.add('sel');}); }; dd.appendChild(d); });
+  });
+}
+
+function buildWide(opts) {
+  var w=document.getElementById('opts-wrap'); w.innerHTML='<div class="q-opts" style="flex-direction:column" id="wide-opts"></div>';
+  var el=document.getElementById('wide-opts');
+  opts.forEach(function(o){ var b=document.createElement('button'); b.className='q-opt wide'; b.innerHTML='<span class="q-opt-icon">'+o.icon+'</span><span class="q-opt-text"><span class="q-opt-main">'+o.label+'</span><span class="q-opt-sub">'+o.sub+'</span></span>'; b.onclick=function(){el.querySelectorAll('.q-opt').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel');}; el.appendChild(b); });
+}
+
+function buildMulti(opts) {
+  var w=document.getElementById('opts-wrap'); w.innerHTML='<p class="multi-hint">Sélectionnez tout ce qui vous correspond</p><div class="q-opts" id="multi-opts"></div>';
+  var el=document.getElementById('multi-opts');
+  opts.forEach(function(o){ var b=document.createElement('button'); b.className='q-opt'; b.textContent=o; b.onclick=function(){b.classList.toggle('sel');}; el.appendChild(b); });
+}
+
+function buildSimple(opts) {
+  var w=document.getElementById('opts-wrap'); w.innerHTML='<div class="q-opts" id="simple-opts"></div>';
+  var el=document.getElementById('simple-opts');
+  opts.forEach(function(o){ var b=document.createElement('button'); b.className='q-opt'; b.textContent=o; b.onclick=function(){el.querySelectorAll('.q-opt').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel');}; el.appendChild(b); });
+}
+
+function getQValue(q) {
+  if(q.isSlider){ var i=document.getElementById('slider-input'); return i?fmt(i.value,sliderCfg.unit):''; }
+  if(q.isLoc){ var l=document.getElementById('loc-input'); return l?l.value:''; }
+  if(q.isMulti){ var s=document.querySelectorAll('#multi-opts .q-opt.sel'); return Array.from(s).map(function(b){return b.textContent;}).join(', '); }
+  if(q.isWide){ var w=document.querySelector('#wide-opts .q-opt.sel'); return w?w.querySelector('.q-opt-main').textContent:''; }
+  var ss=document.querySelector('#simple-opts .q-opt.sel'); return ss?ss.textContent:'';
+}
+
+function showProjetPicker() {
+  document.getElementById('qtxt').textContent = 'Votre projet ?';
+  document.getElementById('qhint').textContent = '';
+  document.getElementById('qstep').textContent = '';
+  document.getElementById('pbar').style.width = '0%';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('skip-lnk').style.display = 'none';
+  var w=document.getElementById('opts-wrap'); w.innerHTML='<div class="q-opts" style="flex-direction:column;gap:10px"></div>';
+  var el=w.querySelector('.q-opts');
+  [{id:'acheter',label:'Acheter',sub:'Je cherche un bien à acquérir',icon:'A'},{id:'vendre',label:'Vendre',sub:'Je veux vendre mon bien',icon:'V'},{id:'estimer',label:'Estimer',sub:'Je veux connaître la valeur de mon bien',icon:'E'},{id:'louer',label:'Louer',sub:'Je cherche un bien à louer',icon:'L'}].forEach(function(p){
+    var b=document.createElement('button'); b.className='q-opt wide';
+    b.innerHTML='<span class="q-opt-icon">'+p.icon+'</span><span class="q-opt-text"><span class="q-opt-main">'+p.label+'</span><span class="q-opt-sub">'+p.sub+'</span></span>';
+    b.onclick=function(){ el.querySelectorAll('.q-opt').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); projet=p.id; profil={projet:p.label}; setTimeout(startFlow,160); };
+    el.appendChild(b);
+  });
+}
+
+function startFlow() {
+  if(projet==='estimer'){ window.open('https://estimateur.guy-hoquet.com','_blank'); showProjetPicker(); return; }
+  qi=0; document.getElementById('next-btn').style.display='block'; document.getElementById('skip-lnk').style.display='block'; renderQ();
+}
+
+function renderQ() {
+  var flow=FLOWS[projet]; if(!flow||qi>=flow.length){onFlowEnd();return;}
+  var q=flow[qi], total=flow.length;
+  document.getElementById('qtxt').textContent=q.q;
+  document.getElementById('qhint').textContent=q.hint||'';
+  document.getElementById('qstep').textContent='Question '+(qi+1)+' / '+total;
+  document.getElementById('pbar').style.width=(((qi+1)/total)*100)+'%';
+  if(q.isSlider) buildSlider(q.cfg);
+  else if(q.isLoc) buildLoc(projet);
+  else if(q.isWide) buildWide(q.opts);
+  else if(q.isMulti) buildMulti(q.opts);
+  else buildSimple(q.opts);
+}
+
+function nextQ() {
+  var flow=FLOWS[projet]; if(!flow)return;
+  var q=flow[qi]; if(q&&q.key) profil[q.key]=getQValue(q);
+  qi++; if(qi>=flow.length) onFlowEnd(); else renderQ();
+}
+
+function onFlowEnd() {
+  if(projet==='vendre'){buildVenteResults();goScreen('s3');return;}
+  buildResultsGrid(RESULTS[projet]||RESULTS.acheter);
+  document.getElementById('score-desc').textContent='Biens correspondant à votre profil';
+  document.getElementById('score-circle').style.display='';
+  goScreen('s2'); si=0; renderSwipe();
+}
+
+function skipToResults() {
+  if(projet==='vendre'){buildVenteResults();goScreen('s3');return;}
+  if(!projet)return;
+  buildResultsGrid(RESULTS[projet]||RESULTS.acheter);
+  document.getElementById('score-circle').style.display='';
+  goScreen('s3');
+}
+
+function buildResultsGrid(data) {
+  var el=document.getElementById('results-grid'); el.innerHTML='';
+  data.forEach(function(r){ el.innerHTML+='<div class="bien-result"><p class="br-name">'+r.name+'</p><p class="br-prix">'+r.prix+'</p><div class="br-score-row"><span class="br-pct">'+r.pct+'%</span><div class="br-bar-bg"><div class="br-bar" style="width:'+r.pct+'%"></div></div></div></div>'; });
+}
+
+function buildVenteResults() {
+  document.getElementById('score-circle').style.display='none';
+  document.getElementById('score-desc').textContent='Votre accompagnement vente Guy Hoquet — de A à Z';
+  var el=document.getElementById('results-grid'); el.innerHTML='';
+  [{name:"1. Diagnostics",prix:"DPE, amiante, plomb, électricité…"},{name:"2. Mise en valeur",prix:"Photos HDR · Visite 3D · Vidéo"},{name:"3. Estimation pro",prix:"Gratuite · Sous 48h en agence"},{name:"4. Mandat exclusif",prix:"Délai moyen 42j · 30+ portails"}].forEach(function(r){
+    el.innerHTML+='<div class="bien-result"><p class="br-name">'+r.name+'</p><p class="br-prix">'+r.prix+'</p><div class="br-score-row"><span class="br-pct" style="color:#185FA5">Inclus</span></div></div>';
+  });
+}
+
+/* ── SWIPE ── */
+function renderSwipe() {
+  var biens=BIENS[projet]||BIENS.acheter;
+  if(si>=biens.length){buildResultsGrid(RESULTS[projet]||RESULTS.acheter);goScreen('s3');return;}
+  var b=biens[si];
+  document.getElementById('sw-name').textContent=b.name;
+  document.getElementById('sw-prix').textContent=b.prix;
+  document.getElementById('sw-count').textContent=(si+1)+' / '+biens.length;
+  var el=document.getElementById('sw-tags'); el.innerHTML='';
+  b.tags.forEach(function(t,i){ var s=document.createElement('span'); s.className='bt2'+(b.ok.indexOf(i)>-1?' ok':''); s.textContent=t; el.appendChild(s); });
+}
+function doSwipe() { si++; renderSwipe(); }
+
+/* ── CHAT ALEXANDRE ── */
+function addMsg(role, text) {
+  var msgs=document.getElementById('chat-msgs');
+  var row=document.createElement('div'); row.className='cmsg'+(role==='user'?' user':'');
+  var av=document.createElement('div'); av.className='cav '+(role==='user'?'usr':'bot'); av.textContent=role==='user'?'V':'A';
+  var bub=document.createElement('div'); bub.className='cbubble '+(role==='user'?'usr':'bot'); bub.textContent=text;
+  if(role==='user'){row.appendChild(bub);row.appendChild(av);}else{row.appendChild(av);row.appendChild(bub);}
+  msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
+}
+
+function showTyping() {
+  var msgs=document.getElementById('chat-msgs');
+  var row=document.createElement('div'); row.className='cmsg'; row.id='typing-row';
+  var av=document.createElement('div'); av.className='cav bot'; av.textContent='A';
+  var b=document.createElement('div'); b.className='cbubble bot';
+  b.innerHTML='<div class="typing-wrap"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>';
+  row.appendChild(av); row.appendChild(b); msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
+}
+function rmTyping() { var t=document.getElementById('typing-row'); if(t)t.remove(); }
+
+function setChips(list) {
+  var el=document.getElementById('chat-chips'); el.innerHTML='';
+  if(!list||!list.length)return;
+  list.forEach(function(c){ var s=document.createElement('span'); s.className='cchip'; s.textContent=c; s.onclick=function(){el.innerHTML=''; addMsg('user',c); processReply(c);}; el.appendChild(s); });
+}
+
+function processReply(txt) {
+  showTyping();
+  setTimeout(function(){
+    rmTyping();
+    var dialogs = DIALOGUES[projet] || DIALOGUES.acheter;
+    var step = chatStep;
+    var reply, chips;
+    if(step < dialogs.length) {
+      reply = dialogs[step].respond(txt);
+      chatStep++;
+      chips = chatStep < dialogs.length ? dialogs[chatStep].chips : ["Prendre rendez-vous","Autre question","Merci !"];
+    } else {
+      reply = reponseGenerique(txt);
+      chips = ["Prendre rendez-vous","Autre question","Merci !"];
+    }
+    addMsg('bot', reply);
+    setChips(chips);
+  }, 700 + Math.random()*400);
+}
+
+function sendChat() {
+  var inp=document.getElementById('chat-inp'); var txt=inp.value.trim(); if(!txt)return;
+  document.getElementById('chat-chips').innerHTML='';
+  addMsg('user', txt); inp.value='';
+  processReply(txt);
+}
+
+function goChat() {
+  document.getElementById('score-circle').style.display='';
+  goScreen('s4'); chatStep=0;
+  document.getElementById('chat-msgs').innerHTML='';
+  document.getElementById('chat-chips').innerHTML='';
+
+  var firstMsg = {
+    acheter: "Bonjour ! J'ai bien reçu votre profil acquéreur. Pour bien vous conseiller, dites-moi — vous cherchez votre résidence principale ou plutôt un investissement ?",
+    vendre:  "Bonjour ! Je suis là pour vous accompagner dans votre projet de vente. Avez-vous déjà eu une estimation de votre bien, ou est-ce la première fois que vous envisagez de vendre ?",
+    louer:   "Bonjour ! Je vais vous aider à trouver le bon bien et préparer un dossier solide. Pour commencer — quelle est votre situation professionnelle ?"
+  };
+
+  var ic = {
+    acheter: ["Résidence principale","Investissement locatif","Les deux"],
+    vendre:  ["Première estimation","J'ai déjà un prix en tête","Je vends pour racheter"],
+    louer:   ["Étudiant(e)","CDI","CDD","Fonctionnaire","Indépendant(e)"]
+  };
+
+  var msg = firstMsg[projet]||firstMsg.acheter;
+  showTyping();
+  setTimeout(function(){ rmTyping(); addMsg('bot', msg); setChips(ic[projet]||[]); }, 700);
+}
+
+showProjetPicker();
+</script>
+</body>
+</html>
